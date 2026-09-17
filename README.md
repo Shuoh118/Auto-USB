@@ -2,6 +2,7 @@
 Android 自动开启USB调试
 一个基于 LSPosed 框架的 Android 系统模块。手机通过数据线连接电脑时，它会自动开启默认USB模式 让用户能够通过adb访问你的设备
 -----
+[English](README_ENG.md)
 # 本项目基于<https://github.com/TigerSpirit217/USBManager?tab=readme-ov-file> 进行修改而来
 ## 功能
 
@@ -40,6 +41,8 @@ Android 自动开启USB调试
 ## 发布与反馈
 * 发布页面：<https://github.com/Shuoh118/Auto-USB/releases/tag/main>
 * 问题反馈：<https://github.com/Shuoh118/Auto-USB/issues>
+
+如果你觉得本项目对你有用，请点上右上角的star，这是对我的最佳鼓励。
 
 ## 鸣谢
 最后感谢@https://github.com/TigerSpirit217
