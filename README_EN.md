@@ -1,13 +1,14 @@
 # Auto USB MTP
 
 An Xposed/LSPosed module: automatically switches the USB connection mode to MTP when a cable is plugged in, so you no longer have to pull down the notification shade and tap it manually every time.
+-----
+[中文](README.md)
 
 ## Features
 
 - Automatically switches the USB mode to MTP when a data cable is connected
 - Hooks `UsbDeviceManager` and `AdbService`, taking effect at the system_server layer
 - Mode switching happens instantly, no device reboot required
-- Supports preset default USB mode inside the module
 
 ## Requirements
 
@@ -17,7 +18,7 @@ An Xposed/LSPosed module: automatically switches the USB connection mode to MTP 
 
 ## Installation
 
-1. Download the latest APK from Releases
+1. Download the latest APK from [Releases](../../releases)
 2. After installing, open the LSPosed Manager
 3. Enable **Auto USB MTP** in the module list
 4. Set the scope to **System Framework** (system)
@@ -25,7 +26,6 @@ An Xposed/LSPosed module: automatically switches the USB connection mode to MTP 
 
 ## Configuration
 
-Open the module app and select your preferred default USB mode (MTP / PTP / Charging only, etc.).
 Changes are written immediately and take effect the next time you plug in the cable.
 
 ## Changelog
