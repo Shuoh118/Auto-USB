@@ -9,7 +9,6 @@ Xposed/LSPosed 模块：插线后自动把 USB 连接模式切到 MTP，不用�
 - 插入数据线后自动将 USB 模式切换为 MTP
 - Hook `UsbDeviceManager`、`AdbService`，在 system_server 层生效
 - 模式切换即时完成，不需要重启设备
-- 支持在模块内预设默认 USB 模式
 
 ## 环境要求
 
@@ -19,15 +18,13 @@ Xposed/LSPosed 模块：插线后自动把 USB 连接模式切到 MTP，不用�
 
 ## 安装
 
-1. 从 Releases 下载最新的 APK
+1. 从 [Releases](../../releases)  下载最新的 APK
 2. 安装后打开 LSPosed 管理器
 3. 在模块列表中启用 **Auto USB MTP**
 4. 作用域勾选 **系统框架**（system）
 5. 重启设备
 
 ## 配置
-
-打开模块 App，选择你希望的默认 USB 模式（MTP / PTP / 仅充电 等）。
 改动立即写入，下次插线按新设置生效。
 
 ## 更新日志
