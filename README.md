@@ -8,7 +8,6 @@ Xposed/LSPosed 模块：插线后自动把 USB 连接模式切到 MTP，不用�
 
 - 插入数据线后自动将 USB 模式切换为 MTP
 - Hook `UsbDeviceManager`、`AdbService`，在 system_server 层生效
-- 模式切换即时完成，不需要重启设备
 
 ## 环境要求
 
@@ -33,11 +32,6 @@ Xposed/LSPosed 模块：插线后自动把 USB 连接模式切到 MTP，不用�
 - 优化 Hook 安装流程
 - 修复部分机型插线后模式未生效的问题
 
-
-## 说明
-
-本模块基于开源项目 USBManager 修改，调整了包名与应用名以符合
-LSPosed 官方仓库的提交要求。功能逻辑与上游保持一致。
 
 ## 许可
 
