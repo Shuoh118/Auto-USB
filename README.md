@@ -44,7 +44,7 @@ LSPosed 官方仓库的提交要求。功能逻辑与上游保持一致。
 本项目使用木兰公共许可证，第 2 版（Mulan PubL v2）。完整授权见 [LICENSE](https://license.coscl.org.cn/MulanPubL-2.0)。
 
 ## 发布与反馈
-* 发布页面：<https://github.com/Shuoh118/Auto-USB/releases/tag/main>
+* 发布页面：<https://github.com/Shuoh118/Auto-USB/releases>
 * 问题反馈：<https://github.com/Shuoh118/Auto-USB/issues>
 
 ## 最后
