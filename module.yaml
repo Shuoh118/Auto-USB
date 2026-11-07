@@ -1,9 +1,7 @@
+schemaVersion: 1
 id: autousb
 name: Auto USB
-version: 1.0
-versionCode: 1000
-author: Shuoh118
-description: USB 功能组合锁定模块。可选 MTP / PTP / USB 网卡 / MIDI / 仅充电，选定后持续维持。
+summary: 选定 USB 功能组合后持续维持，被改掉会立即纠正。
+description: USB 功能组合锁定模块。可选 MTP / PTP / USB 网卡 / MIDI / 仅充电，选中即锁定，被系统或其它工具改掉会立即改回。插线自动开启 adb，拔线关闭。纯 shell 实现，无第三方框架依赖，刷完无图标、无桌面入口。
 license: GPL-3.0-or-later
-repository: https://github.com/Shuoh118/Auto-USB
 homepage: https://github.com/Shuoh118/Auto-USB
