@@ -1,0 +1,22 @@
+# 打包产物
+out/
+*.zip
+
+# 可选 payload（自行放置 APK，不入库）
+payload/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*~
+*.bak
+
+# 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
