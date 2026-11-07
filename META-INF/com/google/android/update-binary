@@ -1,0 +1,60 @@
+#!/sbin/sh
+#
+# Universal module installer.
+#   * Magisk 24+ : hands off to util_functions.sh / install_module
+#   * KernelSU   : normally never reached (ksud runs customize.sh itself)
+#   * APatch     : normally never reached (apd runs customize.sh itself)
+#   * fallback   : self-contained manual install (recovery / old managers)
+#
+umask 022
+
+OUTFD=$2
+ZIPFILE=$3
+
+ui_print() { echo "$1"; }
+
+# ---------------------------------------------------------------- Magisk fast path
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+  if [ "${MAGISK_VER_CODE:-0}" -ge 24000 ] 2>/dev/null; then
+    install_module
+    exit 0
+  fi
+  ui_print "! Magisk < 24.0 detected, using manual install"
+fi
+
+# ---------------------------------------------------------------- manual install
+TMPDIR=/dev/tmp/autousb-install
+rm -rf "$TMPDIR"
+mkdir -p "$TMPDIR" || { ui_print "! cannot create $TMPDIR"; exit 1; }
+
+cd "$TMPDIR" || exit 1
+unzip -o "$ZIPFILE" >/dev/null 2>&1 || {
+  ui_print "! failed to unpack module zip"
+  exit 1
+}
+
+[ -f module.prop ] || { ui_print "! module.prop missing"; exit 1; }
+
+MODID=$(grep -m1 '^id=' module.prop | cut -d= -f2 | tr -d '\r')
+[ -n "$MODID" ] || { ui_print "! module id missing"; exit 1; }
+
+MODPATH=/data/adb/modules/$MODID
+rm -rf "$MODPATH"
+mkdir -p "$MODPATH" || { ui_print "! cannot create $MODPATH"; exit 1; }
+
+cp -af "$TMPDIR"/. "$MODPATH"/ 2>/dev/null
+rm -rf "$MODPATH/META-INF" "$MODPATH/README.md" "$MODPATH/.git" 2>/dev/null
+
+ui_print "- Installing $MODID"
+ui_print "- Target: $MODPATH"
+
+export MODPATH
+( cd "$MODPATH" && sh ./customize.sh )
+
+# mark for the "module updated" hooks, same convention the managers use
+mkdir -p /data/adb/modules_update 2>/dev/null
+rm -rf "$TMPDIR"
+
+ui_print "- Done"
+exit 0

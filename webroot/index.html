@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f7f7" id="tc">
+<title>USB 模式</title>
+<link rel="stylesheet" href="style.css">
+<script>
+/* 首帧之前就把主题定下来，否则暗色下会先闪一下白 */
+(function(){
+try{
+  var v=localStorage.getItem('autousb-theme');
+  var dark = v==='dark' || (v!=='light' && matchMedia('(prefers-color-scheme: dark)').matches);
+  if(v==='light'||v==='dark')document.documentElement.setAttribute('data-theme',v);
+  var m=document.getElementById('tc');
+  if(m)m.setAttribute('content', dark?'#000000':'#f7f7f7');
+}catch(e){}})();
+</script>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <h1>USB 模式</h1>
+    <div class="appbar-actions">
+      <button class="theme-btn" id="btnTheme" aria-label="切换深浅色">
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.6"/>
+          <path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"/>
+        </svg>
+      </button>
+      <span class="chip" id="chipState">读取中</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="card status-card">
+    <div class="status-row">
+      <div class="status-cell">
+        <span class="k">连接</span>
+        <b class="v" id="stUsb">—</b>
+      </div>
+      <div class="status-cell">
+        <span class="k">当前组合</span>
+        <b class="v mono" id="stFunc">—</b>
+      </div>
+      <div class="status-cell">
+        <span class="k">守护进程</span>
+        <b class="v" id="stDaemon">—</b>
+      </div>
+    </div>
+  </section>
+
+  <p class="group-title">选择模式</p>
+  <section class="card list" id="profileList"></section>
+
+  <footer class="foot">
+    <span id="verLine">autousb</span>
+  </footer>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+#!/system/bin/sh
+
+SELF=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+if [ -z "${MODDIR:-}" ]; then
+  if [ -f "$SELF/../module.prop" ]; then MODDIR=$(cd "$SELF/.." && pwd); else MODDIR=/data/adb/modules/autousb; fi
+fi
+. "$MODDIR/bin/autousb.sh"
+cfg_load
+
+PROFILES="none mtp ptp rndis midi mtp,adb ptp,adb mtp,rndis mtp,adb,rndis"
+
+usage() {
+  cat <<'EOF'
+autousbctl - Auto USB MTP control
+
+  状态
+    status             模块 + 守护 + USB 状态
+    profiles           列出所有预设组合
+
+  开关
+    on | off           启用 / 停用整个模块
+    start | stop       守护进程
+    reload             重读配置并重启守护
+
+  固定模式（锁定组合，被改就改回来）
+    lock               查看锁定状态
+    lock on <组合>     开启锁定并设定目标
+    lock off           关闭锁定
+
+  自动模式（插线时套一次）
+    apply [组合]       立刻套用一次，不带参数就用 ON_CONNECT
+    restore            立刻恢复断开组合
+
+  配置
+    set KEY VALUE      写一个配置项
+    get KEY            读一个配置项
+    log [n]            看日志
+    clearlog           清日志
+
+EOF
+}
+
+case "$1" in
+  status)
+    echo "module       : $MODDIR"
+    [ -f "$MODDIR/disable" ] && echo "enabled      : no (disable flag)" || echo "enabled      : yes"
+    echo "config ENABLED : $ENABLED"
+    echo "usb state    : $(usb_link_state)"
+    echo "functions    : $(current_functions)"
+    p=$(daemon_pid)
+    if [ -n "$p" ]; then echo "daemon       : running ($p)"; else echo "daemon       : stopped"; fi
+    if [ "$LOCK_ENABLED" = "1" ]; then
+      echo "mode         : LOCK -> $(lock_target)"
+      echo "lock match   : $([ "$(norm "$(current_functions)")" = "$(norm "$(lock_target)")" ] && echo yes || echo no)"
+    else
+      echo "mode         : AUTO -> ${ON_CONNECT:-none}"
+    fi
+    echo "ON_DISCONNECT: $ON_DISCONNECT"
+    echo "PERSIST      : $PERSIST"
+    echo "INSECURE_ADB : $INSECURE_ADB (ro.adb.secure=$(agetprop ro.adb.secure))"
+    echo "active prop  : $(agetprop sys.autousb.active)"
+    ;;
+
+  profiles)
+    cur_lock=$(lock_target)
+    for p in $PROFILES; do
+      mark=""
+      [ "$p" = "$cur_lock" ] && mark="  <- lock"
+      echo "  $p$mark"
+    done
+    ;;
+
+  on)
+    rm -f "$MODDIR/disable"
+    cfg_set ENABLED 1
+    ENABLED=1
+    daemon_start
+    echo "enabled"
+    ;;
+
+  off)
+    touch "$MODDIR/disable"
+    cfg_set ENABLED 0
+    ENABLED=0
+    daemon_stop
+    module_active_prop 0
+    echo "disabled"
+    ;;
+
+  start)  daemon_start ;;
+  stop)   daemon_stop ;;
+
+  reload)
+    daemon_stop
+    cfg_load
+    daemon_start
+    ;;
+
+  lock)
+    case "$2" in
+      "")
+        if [ "$LOCK_ENABLED" = "1" ]; then
+          echo "lock: on -> ${LOCK_PROFILE:-none}"
+        else
+          echo "lock: off"
+        fi
+        ;;
+      on)
+        [ -n "$3" ] || { echo "usage: autousbctl lock on <组合>"; exit 2; }
+        cfg_set LOCK_ENABLED 1
+        cfg_set LOCK_PROFILE "$3"
+        LOCK_ENABLED=1; LOCK_PROFILE=$3
+        T=$(lock_target)
+        apply_adb "$ADB_ON_CONNECT"
+        apply_profile "${T:-none}"
+        daemon_stop >/dev/null
+        daemon_start >/dev/null
+        echo "locked -> ${T:-none}"
+        ;;
+      off)
+        cfg_set LOCK_ENABLED 0
+        LOCK_ENABLED=0
+        daemon_stop >/dev/null
+        daemon_start >/dev/null
+        echo "lock released"
+        ;;
+      *)
+        echo "usage: autousbctl lock [on <组合>|off]"; exit 2
+        ;;
+    esac
+    ;;
+
+  apply)
+    if [ -n "$2" ]; then
+      TARGET=$(resolve_target "$2")
+    else
+      TARGET=$(lock_target)
+    fi
+    apply_adb "$ADB_ON_CONNECT"
+    apply_profile "${TARGET:-none}"
+    echo "applied -> ${TARGET:-<none>}"
+    ;;
+
+  restore)
+    apply_adb "$ADB_ON_DISCONNECT"
+    apply_profile "$OFF_PROFILE"
+    echo "restored -> ${OFF_PROFILE:-<none>}"
+    ;;
+
+  set)
+    [ -n "$2" ] || { echo "usage: autousbctl set KEY VALUE"; exit 2; }
+    shift
+    cfg_set "$1" "$2"
+    echo "$1=$2"
+    ;;
+
+  get)
+    [ -n "$2" ] || { echo "usage: autousbctl get KEY"; exit 2; }
+    eval "v=\$$2"
+    echo "${v}"
+    ;;
+
+  log)
+    n=${2:-40}
+    case "$n" in ''|*[!0-9]*) n=40 ;; esac
+    [ -f "$LOGFILE" ] && tail -n "$n" "$LOGFILE" || echo "(no log yet)"
+    ;;
+
+  clearlog)
+    : > "$LOGFILE"
+    echo "log cleared"
+    ;;
+
+  ""|-h|--help|help) usage ;;
+  *) echo "unknown command: $1"; usage; exit 2 ;;
+esac

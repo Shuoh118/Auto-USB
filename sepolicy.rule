@@ -1,0 +1,16 @@
+# sepolicy.rule — Magisk / KernelSU / APatch all read this file.
+#
+# 只保留少数几条在 Android 10+ 上稳定存在的类型，避免某条规则在个别机型上
+# 让整个补丁文件被拒。全部是 allow，没有 neverallow 改动，最坏情况是无效而不是变砖。
+#
+# USB gadget / functionfs：认证后端要挂 functionfs 时用得到
+allow su functionfs:dir { mounton };
+allow su functionfs:filesystem mount;
+allow su configfs:dir { read write open search getattr add_name remove_name };
+allow su configfs:file { read write open getattr };
+
+# /vendor/etc/usb_compositions.conf 的 bind mount（仅厂商 QXR 机型需要）
+allow su vendor_configs_file:file { read write open getattr };
+
+# sysfs 里的 UDC 状态探测
+allow su sysfs:file { read open getattr };
