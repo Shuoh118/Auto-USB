@@ -22,7 +22,7 @@ SRC = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("OUT", "/workspace/out")
 
 SKIP_DIRS = {".git", "__pycache__", "out"}
-SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".DS_Store", "README_EN.md"}
+SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".DS_Store", "README_EN.md", "module.yaml"}
 EXEC_SUFFIX = (".sh",)
 EXEC_NAMES = {"autousbctl"}
 
