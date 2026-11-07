@@ -4,10 +4,6 @@
 Produces one artefact:
   autousb-<ver>.zip         ~42 KB, pure shell + webui
 
-If a payload/autousbmtp.apk is present next to this script, a second
-artefact is produced with it bundled:
-  autousb-<ver>-full.zip    payload included
-
 The payload is deliberately not tracked in the source tree - drop your
 own APK into payload/ to build the -full flavour.
 
