@@ -4,9 +4,6 @@
 Produces one artefact:
   autousb-<ver>.zip         ~42 KB, pure shell + webui
 
-The payload is deliberately not tracked in the source tree - drop your
-own APK into payload/ to build the -full flavour.
-
 Run from anywhere:  python3 build.py
 """
 import os
