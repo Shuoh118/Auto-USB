@@ -1,6 +1,6 @@
 ## Auto USB
 
-简体中文 | [English](README_EN.md)
+[English](README_EN.md)
 
 Magisk / KernelSU / APatch 通用
 插数据线自动打开adb拔出关闭
