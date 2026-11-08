@@ -1,6 +1,8 @@
 id=autousb
 name=Auto USB
-version=1.0
-versionCode=1000
+version=1.1
+versionCode=1100
 author=Shuoh118
 description=Plug in to automatically turn on USB Automatically turns off when unplugged can select a mode in the webui
+webuiIcon=icon.png
+actionIcon=icon.png
