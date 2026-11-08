@@ -9,7 +9,7 @@ Magisk / KernelSU / APatch 通用
 
 ## 安装
 
-下载 `autousb-1.0.zip`，在管理器里刷入，重启。
+从[Releases](../../releases)下载 在管理器里刷入重启
 
 在 WebUI 里打开模块，选一个模式：MTP / PTP / USB 网卡 / MIDI / 仅充电
 
