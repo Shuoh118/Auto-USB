@@ -1,21 +1,21 @@
 ## Auto USB
 
- [English](README_EN.md)
+  [简体中文](README_ZH.md)
 
-Magisk / KernelSU / APatch 通用
-插数据线自动打开adb拔出关闭
+Works on Magisk / KernelSU / APatch
+Plug in a data cable and adb turns on automatically, unplug and it turns off
 
-许可：GPL-3.0-or-later **或** Apache-2.0全文见 [`LICENSE`](LICENSE)。
+License: GPL-3.0-or-later **OR** Apache-2.0. See [`LICENSE`](LICENSE) for full texts.
 
-## 安装
+## Install
 
-从[Releases](../../releases)下载 在管理器里刷入重启
+Download from [Releases](../../releases), flash it in your manager, reboot
 
-在 WebUI 里打开模块，选一个模式：MTP / PTP / USB 网卡 / MIDI / 仅充电
+Open the module in a WebUI and pick a mode: MTP / PTP / USB Ethernet / MIDI / Charge only
 
-插上数据线电脑验证
+Plug in a data cable and verify on your computer
 
-## 构建
+## Build
 
 ```sh
 python3 build.py
