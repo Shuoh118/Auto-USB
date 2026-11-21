@@ -1,17 +1,23 @@
 #!/system/bin/sh
 
 SELF=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
-[ -f "$SELF/../bin/autousb.sh" ] || SELF=/data/adb/modules/autousb/bin
-. "$SELF/../bin/autousb.sh"
+BASE=""
+if [ -n "$SELF" ]; then BASE=$(cd "$SELF/.." 2>/dev/null && pwd); fi
+if [ -z "$BASE" ] || [ ! -f "$BASE/bin/autousb.sh" ]; then
+  BASE=/data/adb/modules/autousb
+fi
+[ -f "$BASE/bin/autousb.sh" ] || { echo "NO_LIB"; exit 3; }
+. "$BASE/bin/autousb.sh"
 cfg_load
 
-MODDIR=${MODDIR:-/data/adb/modules/autousb}
+MODDIR=${MODDIR:-$BASE}
 APK=$MODDIR/payload/autousbmtp.apk
 LIB=$MODDIR/payload/lib/libusbmanager_auth.so
 ROOT=$STATEDIR/ffs
 HOSTS=$ROOT/hosts
 RUN=$ROOT/session
-MOUNT_STAGE=/data/local/tmp/autousb-ffs
+# 放在 0700 的 $ROOT 下面，别用 /data/local/tmp 这种任何 app 都能预建的路径
+MOUNT_STAGE=$ROOT/mount.$$
 pick_daemon_class() {
   for c in io.github.shuoh118.autousbmtp.auth.UsbAuthDaemon \
            com.tiger.usbmanager.auth.UsbAuthDaemon; do
@@ -145,7 +151,7 @@ qxr_prepare() {
 
   settings put global adb_enabled 1 2>/dev/null
   setprop vendor.usb.config mtp,qxr,adb 2>/dev/null
-  svc usb setFunctions 2>/dev/null
+  svc usb setFunctions mtp,qxr,adb 2>/dev/null
 
   i=0
   while [ $i -lt 100 ]; do
@@ -182,7 +188,13 @@ do_restore() {
   rm -f "$RUN/watchdog.armed"
 
   [ ! -f "$RUN/daemon.log" ] || cp "$RUN/daemon.log" "$ROOT/last-daemon.log" 2>/dev/null
-  [ ! -f "$RUN/daemon.pid" ] || kill "$(cat "$RUN/daemon.pid" 2>/dev/null)" 2>/dev/null
+  if [ -f "$RUN/daemon.pid" ]; then
+    DP=$(cat "$RUN/daemon.pid" 2>/dev/null)
+    case "$DP" in
+      ''|*[!0-9]*) ;;
+      *) kill "$DP" 2>/dev/null ;;
+    esac
+  fi
   sleep 0.3
 
   if [ -f "$RUN/generic" ]; then

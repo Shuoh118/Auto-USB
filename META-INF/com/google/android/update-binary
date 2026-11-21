@@ -38,22 +38,46 @@ unzip -o "$ZIPFILE" >/dev/null 2>&1 || {
 
 MODID=$(grep -m1 '^id=' module.prop | cut -d= -f2 | tr -d '\r')
 [ -n "$MODID" ] || { ui_print "! module id missing"; exit 1; }
+# id 会拼进 rm -rf 的路径，必须挡住 ../ 之类的值
+case "$MODID" in
+  ''|.*|*..*|*[!A-Za-z0-9._-]*) ui_print "! invalid module id: $MODID"; exit 1 ;;
+esac
 
 MODPATH=/data/adb/modules/$MODID
+
+# 先把旧配置留一份，否则 rm -rf 会把用户设置连同模块一起清掉
+CONF_BAK=""
+if [ -f "$MODPATH/config/autousb.conf" ]; then
+  CONF_BAK=$TMPDIR/.old-autousb.conf
+  cp -f "$MODPATH/config/autousb.conf" "$CONF_BAK" 2>/dev/null || CONF_BAK=""
+fi
+
 rm -rf "$MODPATH"
 mkdir -p "$MODPATH" || { ui_print "! cannot create $MODPATH"; exit 1; }
 
 cp -af "$TMPDIR"/. "$MODPATH"/ 2>/dev/null
-rm -rf "$MODPATH/META-INF" "$MODPATH/README.md" "$MODPATH/.git" 2>/dev/null
+rm -rf "$MODPATH/META-INF" "$MODPATH/.git" 2>/dev/null
+
+if [ -n "$CONF_BAK" ] && [ -f "$CONF_BAK" ]; then
+  mkdir -p "$MODPATH/config" 2>/dev/null
+  cp -f "$CONF_BAK" "$MODPATH/config/autousb.conf" 2>/dev/null
+  chmod 0600 "$MODPATH/config/autousb.conf" 2>/dev/null
+  ui_print "- Config kept from previous install"
+fi
+rm -f "$MODPATH/.old-autousb.conf" 2>/dev/null
 
 ui_print "- Installing $MODID"
 ui_print "- Target: $MODPATH"
 
 export MODPATH
 ( cd "$MODPATH" && sh ./customize.sh )
+RC=$?
+if [ "$RC" -ne 0 ]; then
+  ui_print "! customize.sh failed (exit $RC)"
+  rm -rf "$TMPDIR"
+  exit 1
+fi
 
-# mark for the "module updated" hooks, same convention the managers use
-mkdir -p /data/adb/modules_update 2>/dev/null
 rm -rf "$TMPDIR"
 
 ui_print "- Done"

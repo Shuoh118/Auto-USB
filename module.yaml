@@ -1,7 +1,7 @@
 schemaVersion: 1
 id: autousb
 name: Auto USB
-summary: 选定 USB 功能组合后持续维持，被改掉会立即纠正。
+summary: Plug in to automatically turn on USB Automatically turns off when unplugged
 description: README.md
 license: GPL-3.0-or-later
 homepage: https://github.com/Shuoh118/Auto-USB

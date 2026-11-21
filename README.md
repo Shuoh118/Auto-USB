@@ -1,6 +1,6 @@
 ## Auto USB
 
-  [简体中文](README_ZH.md)
+  [简体中文](README_zh.md)
 
 Works on Magisk / KernelSU / APatch
 Plug in a data cable and adb turns on automatically, unplug and it turns off

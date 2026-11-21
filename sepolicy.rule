@@ -14,3 +14,4 @@ allow su vendor_configs_file:file { read write open getattr };
 
 # sysfs 里的 UDC 状态探测
 allow su sysfs:file { read open getattr };
+allow su sysfs:dir { search open read getattr };

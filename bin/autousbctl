@@ -4,6 +4,7 @@ SELF=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 if [ -z "${MODDIR:-}" ]; then
   if [ -f "$SELF/../module.prop" ]; then MODDIR=$(cd "$SELF/.." && pwd); else MODDIR=/data/adb/modules/autousb; fi
 fi
+[ -f "$MODDIR/bin/autousb.sh" ] || { echo "NO_LIB: $MODDIR/bin/autousb.sh"; exit 3; }
 . "$MODDIR/bin/autousb.sh"
 cfg_load
 
@@ -14,7 +15,8 @@ usage() {
 autousbctl - Auto USB MTP control
 
   状态
-    status             模块 + 守护 + USB 状态
+    status             模块 + 守护 + USB 状态（给人看）
+    state              一行一个 KEY=VALUE（给 WebUI 用）
     profiles           列出所有预设组合
 
   开关
@@ -22,13 +24,14 @@ autousbctl - Auto USB MTP control
     start | stop       守护进程
     reload             重读配置并重启守护
 
-  固定模式（锁定组合，被改就改回来）
+  模式
+    auto               自动模式：插线时套一次 ON_CONNECT，不锁定
     lock               查看锁定状态
-    lock on <组合>     开启锁定并设定目标
-    lock off           关闭锁定
+    lock on <组合>     开启锁定并设定目标（被改就改回来）
+    lock off           关闭锁定，回到自动模式
 
-  自动模式（插线时套一次）
-    apply [组合]       立刻套用一次，不带参数就用 ON_CONNECT
+  立即执行
+    apply [组合]       立刻套用一次，不带参数就用当前目标
     restore            立刻恢复断开组合
 
   配置
@@ -43,7 +46,13 @@ EOF
 case "$1" in
   status)
     echo "module       : $MODDIR"
-    [ -f "$MODDIR/disable" ] && echo "enabled      : no (disable flag)" || echo "enabled      : yes"
+    if [ -f "$MODDIR/disable" ]; then
+      echo "enabled      : no (disable flag)"
+    elif [ "$ENABLED" = "1" ]; then
+      echo "enabled      : yes"
+    else
+      echo "enabled      : no (ENABLED=0)"
+    fi
     echo "config ENABLED : $ENABLED"
     echo "usb state    : $(usb_link_state)"
     echo "functions    : $(current_functions)"
@@ -51,7 +60,11 @@ case "$1" in
     if [ -n "$p" ]; then echo "daemon       : running ($p)"; else echo "daemon       : stopped"; fi
     if [ "$LOCK_ENABLED" = "1" ]; then
       echo "mode         : LOCK -> $(lock_target)"
-      echo "lock match   : $([ "$(norm "$(current_functions)")" = "$(norm "$(lock_target)")" ] && echo yes || echo no)"
+      if fns_equal "$(current_functions)" "$(lock_target)"; then
+        echo "lock match   : yes"
+      else
+        echo "lock match   : no"
+      fi
     else
       echo "mode         : AUTO -> ${ON_CONNECT:-none}"
     fi
@@ -61,26 +74,53 @@ case "$1" in
     echo "active prop  : $(agetprop sys.autousb.active)"
     ;;
 
+  # WebUI 只调这一条。必须单行输出：部分 WebUI 宿主（KernelSU 某些版本）
+  # 只回传 stdout 的最后一行，多行会被吞掉，只剩最后一行。
+  state)
+    p=$(daemon_pid)
+    en=1
+    [ "$ENABLED" = "1" ] || en=0
+    [ -f "$MODDIR/disable" ] && en=0
+    ver=$(sed -n 's/^version=//p' "$MODDIR/module.prop" 2>/dev/null | head -n 1 | tr -d '\r')
+    dis=0
+    [ -f "$MODDIR/disable" ] && dis=1
+    dirn=0
+    [ -d "$MODDIR" ] && dirn=1
+    # 字段按重要性排序：万一宿主还有截断，前面这些也够界面用
+    printf 'enabled=%s;lock=%s;profile=%s;on_connect=%s;daemon=%s;usb=%s;functions=%s;version=%s;dir=%s;disable=%s' \
+      "$en" "$LOCK_ENABLED" "$LOCK_PROFILE" "$ON_CONNECT" \
+      "${p:-0}" "$(usb_link_state)" "$(current_functions_fast)" "$ver" "$dirn" "$dis"
+    u=$(id -u 2>/dev/null)
+    [ -n "$u" ] && printf ';uid=%s' "$u"
+    printf '\n'
+    ;;
+
   profiles)
-    cur_lock=$(lock_target)
     for p in $PROFILES; do
       mark=""
-      [ "$p" = "$cur_lock" ] && mark="  <- lock"
+      [ "$p" = "$(lock_target)" ] && mark="  <- current"
       echo "  $p$mark"
     done
     ;;
 
   on)
-    rm -f "$MODDIR/disable"
-    cfg_set ENABLED 1
+    rm -f "$MODDIR/disable" 2>/dev/null
+    cfg_set ENABLED 1 || { echo "ERROR: cannot write config"; exit 1; }
     ENABLED=1
-    daemon_start
-    echo "enabled"
+    DAEMON=$(int_or "$DAEMON" 1 0 1)
+    rc=0
+    if [ "$DAEMON" = "1" ]; then
+      daemon_start || rc=1
+    else
+      echo "enabled (daemon off)"
+    fi
+    module_active_prop 1
+    exit $rc
     ;;
 
   off)
-    touch "$MODDIR/disable"
-    cfg_set ENABLED 0
+    touch "$MODDIR/disable" 2>/dev/null
+    cfg_set ENABLED 0 || { echo "ERROR: cannot write config"; exit 1; }
     ENABLED=0
     daemon_stop
     module_active_prop 0
@@ -91,38 +131,59 @@ case "$1" in
   stop)   daemon_stop ;;
 
   reload)
-    daemon_stop
+    daemon_stop >/dev/null 2>&1
     cfg_load
-    daemon_start
+    if module_enabled && [ "$DAEMON" = "1" ]; then
+      daemon_start
+    else
+      echo "reloaded (daemon off)"
+    fi
+    ;;
+
+  auto)
+    cfg_set LOCK_ENABLED 0 || { echo "ERROR: cannot write config"; exit 1; }
+    LOCK_ENABLED=0
+    daemon_stop >/dev/null 2>&1
+    cfg_load
+    if module_enabled && [ "$DAEMON" = "1" ]; then
+      daemon_start >/dev/null 2>&1
+    fi
+    echo "auto mode"
     ;;
 
   lock)
     case "$2" in
       "")
         if [ "$LOCK_ENABLED" = "1" ]; then
-          echo "lock: on -> ${LOCK_PROFILE:-none}"
+          echo "lock: on -> $(lock_target)"
         else
-          echo "lock: off"
+          echo "lock: off (auto)"
         fi
         ;;
       on)
         [ -n "$3" ] || { echo "usage: autousbctl lock on <组合>"; exit 2; }
-        cfg_set LOCK_ENABLED 1
-        cfg_set LOCK_PROFILE "$3"
+        profile_valid "$3" || { echo "invalid profile: $3"; exit 2; }
+        cfg_set LOCK_PROFILE "$3" || { echo "ERROR: cannot write config"; exit 1; }
+        if ! cfg_set LOCK_ENABLED 1; then
+          # 第二个键写失败就回滚，别留下"锁开着但 profile 是旧的"
+          cfg_set LOCK_ENABLED 0 2>/dev/null
+          echo "ERROR: cannot write config"; exit 1
+        fi
         LOCK_ENABLED=1; LOCK_PROFILE=$3
         T=$(lock_target)
         apply_adb "$ADB_ON_CONNECT"
         apply_profile "${T:-none}"
-        daemon_stop >/dev/null
-        daemon_start >/dev/null
+        daemon_stop >/dev/null 2>&1
+        module_enabled && [ "$DAEMON" = "1" ] && daemon_start >/dev/null 2>&1
         echo "locked -> ${T:-none}"
         ;;
       off)
-        cfg_set LOCK_ENABLED 0
+        cfg_set LOCK_ENABLED 0 || { echo "ERROR: cannot write config"; exit 1; }
         LOCK_ENABLED=0
-        daemon_stop >/dev/null
-        daemon_start >/dev/null
-        echo "lock released"
+        daemon_stop >/dev/null 2>&1
+        cfg_load
+        module_enabled && [ "$DAEMON" = "1" ] && daemon_start >/dev/null 2>&1
+        echo "lock released (auto)"
         ;;
       *)
         echo "usage: autousbctl lock [on <组合>|off]"; exit 2
@@ -132,6 +193,7 @@ case "$1" in
 
   apply)
     if [ -n "$2" ]; then
+      profile_valid "$2" || { echo "invalid profile: $2"; exit 2; }
       TARGET=$(resolve_target "$2")
     else
       TARGET=$(lock_target)
@@ -143,21 +205,33 @@ case "$1" in
 
   restore)
     apply_adb "$ADB_ON_DISCONNECT"
-    apply_profile "$OFF_PROFILE"
-    echo "restored -> ${OFF_PROFILE:-<none>}"
+    TARGET=$(resolve_target "$OFF_PROFILE" "$ADB_ON_DISCONNECT")
+    apply_profile "${TARGET:-none}"
+    echo "restored -> ${TARGET:-<none>}"
     ;;
 
   set)
     [ -n "$2" ] || { echo "usage: autousbctl set KEY VALUE"; exit 2; }
-    shift
-    cfg_set "$1" "$2"
-    echo "$1=$2"
+    key=$2
+    shift 2
+    [ $# -gt 0 ] || { echo "usage: autousbctl set KEY VALUE"; exit 2; }
+    cfg_key_ok "$key" || { echo "unknown key: $key"; exit 2; }
+    cfg_set "$key" "$*"
+    rc=$?
+    case "$rc" in
+      0) ;;
+      2) echo "unknown key: $key"; exit 2 ;;
+      3) echo "invalid value: $*"; exit 2 ;;
+      *) echo "ERROR: cannot write config"; exit 1 ;;
+    esac
+    echo "$key=$*"
     ;;
 
   get)
     [ -n "$2" ] || { echo "usage: autousbctl get KEY"; exit 2; }
+    cfg_key_ok "$2" || { echo "unknown key: $2"; exit 2; }
     eval "v=\$$2"
-    echo "${v}"
+    echo "$v"
     ;;
 
   log)

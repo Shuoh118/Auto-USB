@@ -8,32 +8,44 @@ esac
 
 CONF=$MODDIR/config/autousb.conf
 
+# 带默认值读取：配置项缺失时不会把功能静默关掉
 conf_get() {
-  [ -f "$CONF" ] || return 1
-  sed -n "s/^$1=//p" "$CONF" 2>/dev/null | head -n 1 | tr -d '\r' | sed 's/[[:space:]]*#.*$//'
+  _def=$2
+  _v=""
+  if [ -f "$CONF" ]; then
+    _v=$(sed -n "s/^$1=//p" "$CONF" 2>/dev/null | head -n 1 | tr -d '\r' | sed 's/[[:space:]]*#.*$//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+  fi
+  [ -n "$_v" ] || _v=$_def
+  printf '%s' "$_v"
 }
 
-ENABLED=$(conf_get ENABLED)
+ENABLED=$(conf_get ENABLED 1)
 [ "$ENABLED" = "0" ] && exit 0
 
-INSECURE=$(conf_get INSECURE_ADB)
-PERSIST=$(conf_get PERSIST)
-VENDOR_MODE=$(conf_get VENDOR_MODE)
+INSECURE=$(conf_get INSECURE_ADB 0)
+PERSIST=$(conf_get PERSIST 1)
+VENDOR_MODE=$(conf_get VENDOR_MODE auto)
 
-ADB_ON=$(conf_get ADB_ON_CONNECT)
+ADB_ON=$(conf_get ADB_ON_CONNECT keep)
 
-LOCK_ENABLED=$(conf_get LOCK_ENABLED)
+LOCK_ENABLED=$(conf_get LOCK_ENABLED 0)
 if [ "$LOCK_ENABLED" = "1" ]; then
-  PROFILE=$(conf_get LOCK_PROFILE)
+  PROFILE=$(conf_get LOCK_PROFILE mtp)
 else
-  PROFILE=$(conf_get ON_CONNECT)
+  PROFILE=$(conf_get ON_CONNECT mtp)
 fi
 
 # 把 adb 拼进开机组合。不拼的话 adbd 根本不会启动，
 # 插线后要等守护进程起来才有 adb，锁屏期间更是完全不通。
 case "$PROFILE" in
   ''|none) ;;
-  *adb*) ;;
+  *adb*)
+    # ADB_ON_CONNECT=0 时要把组合里已有的 adb 去掉，不然带 adb 的旧组合会原样写回去
+    if [ "$ADB_ON" = "0" ]; then
+      PROFILE=$(printf '%s' "$PROFILE" | sed 's/^adb,//;s/,adb//;s/^adb$//')
+      [ -n "$PROFILE" ] || PROFILE=none
+    fi
+    ;;
   *)
     if [ "$ADB_ON" = "1" ]; then
       PROFILE="$PROFILE,adb"
@@ -77,6 +89,6 @@ fi
 
 mkdir -p /data/adb/autousb/run /data/adb/autousb/auth 2>/dev/null
 chmod 0700 /data/adb/autousb /data/adb/autousb/run /data/adb/autousb/auth 2>/dev/null
-chown 0:0 /data/adb/autousb 2>/dev/null
+chown -R 0:0 /data/adb/autousb 2>/dev/null
 
 exit 0

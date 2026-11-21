@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """build.py - pack the autousb module.
 
-Produces one artefact:
-  autousb-<ver>.zip         ~42 KB, pure shell + webui
+Produces one artefact in the sibling `out/` directory (outside the source tree):
+  autousb-<ver>.zip         ~60 KB, pure shell + webui
 
 Run from anywhere:  python3 build.py
+Override output dir: OUT=/some/dir python3 build.py
 """
 import os
 import stat
@@ -12,12 +13,14 @@ import sys
 import zipfile
 
 SRC = os.path.dirname(os.path.abspath(__file__))
-OUT = os.environ.get("OUT", "/workspace/out")
+# 产物默认放在源码目录之外（同级 out/），别混进模块里被下一次打包带进去
+OUT = os.environ.get("OUT") or os.path.join(os.path.dirname(SRC), "out")
 
 SKIP_DIRS = {".git", "__pycache__", "out"}
-SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".DS_Store", "README_EN.md", "module.yaml"}
+SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".gitattributes", ".DS_Store"}
 EXEC_SUFFIX = (".sh",)
-EXEC_NAMES = {"autousbctl"}
+# update-binary 必须带可执行位，否则 recovery 里直接跑会报 Permission denied
+EXEC_NAMES = {"autousbctl", "update-binary"}
 
 
 def read_version():
@@ -46,6 +49,8 @@ def pack(zip_path, include_payload):
                     continue
                 mode = 0o755 if is_exec(rel, name) else 0o644
                 info = zipfile.ZipInfo(rel, (2026, 1, 1, 0, 0, 0))
+                # create_system=3(Unix) 才会让解压工具去读 external_attr 里的权限位
+                info.create_system = 3
                 info.external_attr = (stat.S_IFREG | mode) << 16
                 info.compress_type = zipfile.ZIP_DEFLATED
                 with open(full, "rb") as fh:

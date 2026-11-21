@@ -58,8 +58,21 @@ try{
     </div>
   </section>
 
-  <p class="group-title">选择模式</p>
+  <p class="group-title">模块</p>
+  <section class="card list">
+    <div class="row switch" id="rowEnable" role="switch" aria-checked="false" tabindex="0">
+      <span class="row-main">
+        <span class="row-title">启用 Auto USB</span>
+        <span class="row-sub" id="enableSub">读取中…</span>
+      </span>
+      <span class="sw" aria-hidden="true"></span>
+    </div>
+  </section>
+
+  <p class="group-title">USB 模式</p>
   <section class="card list" id="profileList"></section>
+
+  <p class="hint" id="hintLine"></p>
 
   <footer class="foot">
     <span id="verLine">autousb</span>
@@ -67,6 +80,13 @@ try{
 
 </main>
 
-<script src="script.js"></script>
+<script>
+/* 带时间戳加载，避免 WebView 缓存住旧版 script.js 导致改了没生效 */
+(function () {
+  var s = document.createElement('script');
+  s.src = 'script.js?r=' + Date.now();
+  document.body.appendChild(s);
+})();
+</script>
 </body>
 </html>
