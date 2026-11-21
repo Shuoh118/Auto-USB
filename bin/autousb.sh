@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
 # Auto USB 公共函数库
-# 被 autousbctl / autousbd.sh / service.sh / post-fs-data.sh / action.sh / usbauth.sh source
+# 被 autousbctl / autousbd.sh / service.sh / post-fs-data.sh / action.sh source
 # 只依赖 Android 自带的 toybox / mksh，不需要 busybox。
 
 # WebUI 宿主给的 PATH 可能不完整（尤其 ksu.exec / mmrl.exec），先兜底

@@ -67,9 +67,8 @@ set_ro() {
 }
 
 if [ "$INSECURE" = "1" ]; then
+  # 只关 adb 的主机指纹校验；不再改 ro.debuggable / service.adb.root
   set_ro ro.adb.secure 0
-  set_ro ro.debuggable 1
-  set_ro service.adb.root 1
 fi
 
 if [ -n "$PROFILE" ] && [ "$PROFILE" != "none" ]; then

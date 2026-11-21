@@ -20,3 +20,7 @@ Plug in a data cable and verify on your computer
 ```sh
 python3 build.py
 ```
+
+## Security
+
+ADB over USB requires host authorization by default. Setting `INSECURE_ADB=1` in `config/autousb.conf` disables ADB host-key verification (`ro.adb.secure=0`); it is **off by default** — enable it only for computers you fully trust. The module never sets `ro.debuggable` or `service.adb.root`.

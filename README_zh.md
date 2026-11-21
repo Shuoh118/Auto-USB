@@ -20,3 +20,7 @@ Magisk / KernelSU / APatch 通用
 ```sh
 python3 build.py
 ```
+
+## 安全
+
+默认情况下 ADB 需要主机授权。`config/autousb.conf` 里的 `INSECURE_ADB=1` 会关闭 ADB 的主机指纹校验（`ro.adb.secure=0`），**默认关闭**，只在完全信任所连电脑时才打开。模块不会修改 `ro.debuggable` 或 `service.adb.root`。

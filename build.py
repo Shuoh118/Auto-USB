@@ -17,7 +17,8 @@ SRC = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("OUT") or os.path.join(os.path.dirname(SRC), "out")
 
 SKIP_DIRS = {".git", "__pycache__", "out"}
-SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".gitattributes", ".DS_Store"}
+SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".gitattributes", ".DS_Store",
+              "RELEASE.md", "RELEASE_zh.md"}
 EXEC_SUFFIX = (".sh",)
 # update-binary 必须带可执行位，否则 recovery 里直接跑会报 Permission denied
 EXEC_NAMES = {"autousbctl", "update-binary"}
