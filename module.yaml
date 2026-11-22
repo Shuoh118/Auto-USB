@@ -5,3 +5,5 @@ summary: Plug in to automatically turn on USB Automatically turns off when unplu
 description: README.md
 license: GPL-3.0-or-later
 homepage: https://github.com/Shuoh118/Auto-USB
+support: https://github.com/Shuoh118/Auto-USB/issues
+icon: icon.png
