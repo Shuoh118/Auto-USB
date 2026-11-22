@@ -1,6 +1,20 @@
 #!/system/bin/sh
 command -v ui_print >/dev/null 2>&1 || ui_print() { echo "$1"; }
 
+print_modname() {
+  ui_print "***********************************************"
+  ui_print "           Auto USB"
+  ui_print "    原谅我词不达意 但真的很高兴遇见你"
+  ui_print "***********************************************"
+  ui_print "         ____  _"
+  ui_print "        / ___|| |__ _   _ ___"
+  ui_print "        \___ \| '_ \| | | |/ _ \\"
+  ui_print "        |____/|_| |_|\__,_|\___/"
+  ui_print "***********************************************"
+}
+
+print_modname
+
 MODPATH="${MODPATH:-$(pwd)}"
 MODID=autousb
 OLD_MOD=/data/adb/modules/$MODID
@@ -28,7 +42,7 @@ if [ ! -f "$MODPATH/bin/autousb.sh" ]; then
   if [ -n "${ZIPFILE:-}" ] && [ -f "$ZIPFILE" ]; then
     unzip -o "$ZIPFILE" -x 'META-INF/*' 'README.md' -d "$MODPATH" >/dev/null 2>&1
   else
-    ui_print "! ZIPFILE not found, payload missing"
+    ui_print "! ZIPFILE not found, module files missing"
   fi
 fi
 
@@ -48,28 +62,6 @@ case "$ARCH" in
 esac
 ui_print "- Device ABI  : ${ARCH:-unknown} -> ${ABI:-none}"
 
-PAYLOAD_APK="$MODPATH/payload/autousbmtp.apk"
-SO="$MODPATH/payload/lib/libusbmanager_auth.so"
-if [ -f "$PAYLOAD_APK" ] && [ -n "$ABI" ]; then
-  mkdir -p "$MODPATH/payload/lib" 2>/dev/null
-  rm -f "$SO"
-  # 不用 unzip -j（部分 toybox/recovery 的 unzip 不认），先解到临时目录再搬
-  TMP_LIB="$MODPATH/payload/.lib.$$"
-  rm -rf "$TMP_LIB"; mkdir -p "$TMP_LIB" 2>/dev/null
-  unzip -o "$PAYLOAD_APK" "lib/$ABI/libusbmanager_auth.so" -d "$TMP_LIB" >/dev/null 2>&1
-  if [ -f "$TMP_LIB/lib/$ABI/libusbmanager_auth.so" ]; then
-    mv -f "$TMP_LIB/lib/$ABI/libusbmanager_auth.so" "$SO" 2>/dev/null
-  fi
-  rm -rf "$TMP_LIB"
-  if [ -f "$SO" ]; then
-    ui_print "- Auth backend: native lib ready ($ABI)"
-  else
-    ui_print "- Auth backend: no .so for $ABI, auth backend unavailable"
-  fi
-else
-  ui_print "- Auth backend: payload not bundled, auth backend unavailable"
-fi
-
 set_perm_recursive() {
   chown -R "$1:$2" "$3" 2>/dev/null
   find "$3" -type d -exec chmod 0755 {} \; 2>/dev/null
@@ -86,8 +78,6 @@ for f in "$MODPATH"/bin/*.sh "$MODPATH"/bin/autousbctl \
 done
 chmod 0644 "$MODPATH"/module.prop "$MODPATH"/README.md 2>/dev/null
 chmod 0600 "$MODPATH"/config/autousb.conf 2>/dev/null
-# set_perm_recursive 会把 .so 改成 0644，这里改回来
-[ -f "$SO" ] && chmod 0755 "$SO" 2>/dev/null
 
 mkdir -p /data/adb/autousb/auth /data/adb/autousb/run /data/adb/autousb/ffs 2>/dev/null
 chmod 0700 /data/adb/autousb /data/adb/autousb/auth /data/adb/autousb/run /data/adb/autousb/ffs 2>/dev/null

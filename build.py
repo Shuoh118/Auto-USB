@@ -16,7 +16,8 @@ SRC = os.path.dirname(os.path.abspath(__file__))
 # 产物默认放在源码目录之外（同级 out/），别混进模块里被下一次打包带进去
 OUT = os.environ.get("OUT") or os.path.join(os.path.dirname(SRC), "out")
 
-SKIP_DIRS = {".git", "__pycache__", "out"}
+# payload/ 不再参与打包（模块是纯 shell + 前端）
+SKIP_DIRS = {".git", "__pycache__", "out", "payload"}
 SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".gitattributes", ".DS_Store",
               "RELEASE.md", "RELEASE_zh.md"}
 EXEC_SUFFIX = (".sh",)
@@ -36,7 +37,7 @@ def is_exec(rel, name):
     return name.endswith(EXEC_SUFFIX) or name in EXEC_NAMES
 
 
-def pack(zip_path, include_payload):
+def pack(zip_path):
     count = 0
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for root, dirs, files in os.walk(SRC):
@@ -46,8 +47,6 @@ def pack(zip_path, include_payload):
                     continue
                 full = os.path.join(root, name)
                 rel = os.path.relpath(full, SRC).replace(os.sep, "/")
-                if rel.startswith("payload/") and not include_payload:
-                    continue
                 mode = 0o755 if is_exec(rel, name) else 0o644
                 info = zipfile.ZipInfo(rel, (2026, 1, 1, 0, 0, 0))
                 # create_system=3(Unix) 才会让解压工具去读 external_attr 里的权限位
@@ -65,16 +64,8 @@ def main():
     ver = read_version()
 
     p = os.path.join(OUT, f"autousb-{ver}.zip")
-    n = pack(p, False)
+    n = pack(p)
     print(f"{os.path.basename(p):32s} {n:3d} files  {os.path.getsize(p)/1024:9.1f} KiB")
-
-    apk = os.path.join(SRC, "payload", "autousbmtp.apk")
-    if os.path.isfile(apk):
-        pf = os.path.join(OUT, f"autousb-{ver}-full.zip")
-        n = pack(pf, True)
-        print(f"{os.path.basename(pf):32s} {n:3d} files  {os.path.getsize(pf)/1024:9.1f} KiB")
-    else:
-        print("payload/autousbmtp.apk 不存在，跳过 -full 构建")
     return 0
 
 
