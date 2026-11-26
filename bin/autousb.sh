@@ -61,12 +61,12 @@ RP=${RP:-$(resetprop_bin 2>/dev/null)}
 cfg_defaults() {
   ENABLED=1
   DAEMON=1
-  ON_CONNECT=mtp
+  ON_CONNECT=none
   ON_DISCONNECT=keep
-  OFF_PROFILE=mtp
+  OFF_PROFILE=none
   PERSIST=1
   ADB_ON_CONNECT=keep
-  ADB_ON_DISCONNECT=keep
+  ADB_ON_DISCONNECT=0
   INSECURE_ADB=0
   VENDOR_MODE=auto
   POLL_INTERVAL=1
@@ -74,7 +74,7 @@ cfg_defaults() {
   LOG_LEVEL=1
   LOG_MAX_KB=256
   LOCK_ENABLED=0
-  LOCK_PROFILE=mtp
+  LOCK_PROFILE=none
   LOCK_REASSERT=5
 }
 
@@ -126,7 +126,7 @@ cfg_sanitize() {
   case "$INSECURE_ADB" in 0|1) ;; *) INSECURE_ADB=0 ;; esac
   case "$LOCK_ENABLED" in 0|1) ;; *) LOCK_ENABLED=0 ;; esac
   case "$ADB_ON_CONNECT" in 0|1|keep) ;; *) ADB_ON_CONNECT=keep ;; esac
-  case "$ADB_ON_DISCONNECT" in 0|1|keep) ;; *) ADB_ON_DISCONNECT=keep ;; esac
+  case "$ADB_ON_DISCONNECT" in 0|1|keep) ;; *) ADB_ON_DISCONNECT=0 ;; esac
   case "$ON_DISCONNECT" in keep|restore|none) ;; *) ON_DISCONNECT=keep ;; esac
   case "$VENDOR_MODE" in auto|force) ;; *) VENDOR_MODE=auto ;; esac
   case "$ON_CONNECT" in '') ON_CONNECT=mtp ;; esac

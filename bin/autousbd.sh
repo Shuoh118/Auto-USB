@@ -63,6 +63,8 @@ while :; do
         fi
       fi
     else
+      # 拔线：锁定模式也要把 adb 关掉，组合保持不动
+      [ "$APPLIED" = "lock-on" ] && apply_adb "$ADB_ON_DISCONNECT"
       APPLIED=""
       TICKS=0
     fi
@@ -115,14 +117,14 @@ while :; do
     *)
       [ "$APPLIED" = "off" ] && { sleep "${POLL_INTERVAL:-1}"; continue; }
       log 1 "cable out"
+      # 拔线一律按 ADB_ON_DISCONNECT 处理 adb（默认 0 = 关掉 USB 调试）
+      apply_adb "$ADB_ON_DISCONNECT"
       case "${ON_DISCONNECT:-keep}" in
         restore)
-          apply_adb "$ADB_ON_DISCONNECT"
           # 断开时也要按 ADB_ON_DISCONNECT 决定组合里带不带 adb
           apply_profile "$(resolve_target "$OFF_PROFILE" "$ADB_ON_DISCONNECT")"
           ;;
         none)
-          apply_adb "$ADB_ON_DISCONNECT"
           apply_profile none
           ;;
         *) : ;;

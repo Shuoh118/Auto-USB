@@ -41,7 +41,6 @@ if [ "$LOCK_ENABLED" = "1" ]; then
     log 1 "boot lock already satisfied ($CUR)"
   else
     log 1 "boot lock: ${CUR:-<none>} -> ${WANT:-<none>}"
-    apply_adb "$ADB_ON_CONNECT"
     apply_profile "${WANT:-none}"
   fi
 elif [ "$PERSIST" = "1" ] && [ -n "$ON_CONNECT" ] && [ "$ON_CONNECT" != "none" ]; then
@@ -51,7 +50,6 @@ elif [ "$PERSIST" = "1" ] && [ -n "$ON_CONNECT" ] && [ "$ON_CONNECT" != "none" ]
     log 1 "boot composition already ok ($CUR)"
   else
     log 1 "boot composition = ${CUR:-<none>}, aligning to $WANT"
-    apply_adb "$ADB_ON_CONNECT"
     apply_profile "${WANT:-none}"
   fi
 fi
@@ -60,16 +58,15 @@ if [ "$INSECURE_ADB" = "1" ]; then
   set_insecure_adb 1
 fi
 
-# adb_enabled 是开发者选项里那个开关。组合里带 adb（哪怕是 keep 带来的）就得打开，
-# 否则 adbd 不会起来，锁屏插线自然拿不到 adb。
-ADB_NEEDED=0
-[ "$ADB_ON_CONNECT" = "1" ] && ADB_NEEDED=1
-[ "$ADB_ON_DISCONNECT" = "1" ] && ADB_NEEDED=1
-case ",$WANT," in *,adb,*) ADB_NEEDED=1 ;; esac
-if [ "$ADB_NEEDED" = "1" ]; then
-  asettings put global adb_enabled 1
-  log 1 "adb_enabled -> 1"
-fi
+# 开机时按当前有没有插线决定 adb 开关：插着就开，没插就关（拔线关调试）
+case "$(usb_link_state)" in
+  configured|powered)
+    apply_adb "$ADB_ON_CONNECT"
+    ;;
+  *)
+    apply_adb "$ADB_ON_DISCONNECT"
+    ;;
+esac
 
 DAEMON_OK=1
 if [ "$DAEMON" = "1" ]; then

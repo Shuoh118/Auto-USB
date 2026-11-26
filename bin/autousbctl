@@ -164,6 +164,8 @@ case "$1" in
         [ -n "$3" ] || { echo "usage: autousbctl lock on <组合>"; exit 2; }
         profile_valid "$3" || { echo "invalid profile: $3"; exit 2; }
         cfg_set LOCK_PROFILE "$3" || { echo "ERROR: cannot write config"; exit 1; }
+        # 自动模式用的是 ON_CONNECT，这里一并写上：两种模式共用同一个"选择的模式"
+        cfg_set ON_CONNECT "$3" || { echo "ERROR: cannot write config"; exit 1; }
         if ! cfg_set LOCK_ENABLED 1; then
           # 第二个键写失败就回滚，别留下"锁开着但 profile 是旧的"
           cfg_set LOCK_ENABLED 0 2>/dev/null

@@ -17,7 +17,7 @@ SRC = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("OUT") or os.path.join(os.path.dirname(SRC), "out")
 
 # payload/ 不再参与打包（模块是纯 shell + 前端）
-SKIP_DIRS = {".git", "__pycache__", "out", "payload"}
+SKIP_DIRS = {".git", "__pycache__", "out", "payload", "webui"}
 SKIP_FILES = {"build.py", "build.sh", ".gitignore", ".gitattributes", ".DS_Store",
               "RELEASE.md", "RELEASE_zh.md"}
 EXEC_SUFFIX = (".sh",)

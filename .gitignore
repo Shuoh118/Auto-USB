@@ -9,3 +9,6 @@ out/
 
 __pycache__/
 *.pyc
+
+webui/node_modules/
+webui/.vite/

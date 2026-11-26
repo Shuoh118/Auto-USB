@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f7f7" />
+    <title>Auto USB</title>
+    <script>
+      // Apply the saved colour mode before first paint to avoid a theme flash.
+      try {
+        var saved = localStorage.getItem('autousb.theme')
+        var dark = saved === 'dark'
+        if (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches) dark = true
+        if (dark) {
+          document.documentElement.classList.add('m-theme-dark')
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', '#000000')
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
