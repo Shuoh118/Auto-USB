@@ -5,7 +5,7 @@
 Magisk / KernelSU / APatch 通用
 插数据线自动打开adb拔出关闭
 
-许可：GPL-3.0-or-later **或** Apache-2.0全文见 [`LICENSE`](LICENSE)。
+许可：GPL-3.0-or-later 全文见 [`LICENSE`](LICENSE)。
 
 ## 安装
 
@@ -13,14 +13,23 @@ Magisk / KernelSU / APatch 通用
 
 在 WebUI 里打开模块，选一个模式：MTP / PTP / USB 网卡 / MIDI / 仅充电
 
-插上数据线电脑验证
+| 管理器 | 版本要求 |
+|---|---|
+| Magisk | 20.4+ |
+| KernelSU | 0.9.0+ |
+| APatch | 10.7+ |
+
+
+## WebUI
+
+| 管理器 | 打开方式 |
+|---|---|
+| KernelSU / KernelSU Next | 模块卡片 → WebUI |
+| APatch | 模块卡片 → WebUI |
+| Magisk | 安装 [MMRL](https://github.com/MMRLApp/MMRL)，并允许 **高级 KernelSU API** |
 
 ## 构建
 
 ```sh
 python3 build.py
 ```
-
-## 安全
-
-默认情况下 ADB 需要主机授权。`config/autousb.conf` 里的 `INSECURE_ADB=1` 会关闭 ADB 的主机指纹校验（`ro.adb.secure=0`），**默认关闭**，只在完全信任所连电脑时才打开。模块不会修改 `ro.debuggable` 或 `service.adb.root`。
